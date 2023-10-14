@@ -27,6 +27,8 @@ const MongoStore = require('connect-mongo');
 
 const dbURL = process.env.MONGO_URL
 
+const secret = process.env.SECRET
+
 // Set connection DB
 main().catch(err => console.log('Error Connection:', err));
 
@@ -53,10 +55,10 @@ const sessionConfig = {
         mongoUrl: dbURL,
         dbName: "yelp-camp",
         touchAfter: 24 * 60 * 60,
-        secret: "thesecretisout",
+        secret: secret,
     }),
     name: 'session',  // custom name to the ID SESSION
-    secret: 'thisisasecret',
+    secret: secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
