@@ -25,13 +25,13 @@ const mongoSanitize = require('express-mongo-sanitize');
 
 const MongoStore = require('connect-mongo');
 
-// const dbURL = process.env.MONGO_URL
+const dbURL = process.env.MONGO_URL
 
 // Set connection DB
 main().catch(err => console.log('Error Connection:', err));
 
 async function main() {
-    await mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp', {
+    await mongoose.connect(dbURL, {
         useNewUrlPArser: true,
         useUnifiedTopology: true
     });
@@ -50,7 +50,7 @@ app.use(mongoSanitize());   // Not allows to any $ operator to be triggered in t
 
 const sessionConfig = {
     store: MongoStore.create({
-        mongoUrl: 'mongodb://127.0.0.1:27017/yelp-camp',
+        mongoUrl: dbURL,
         dbName: "yelp-camp",
         touchAfter: 24 * 60 * 60,
         secret: "thesecretisout",
