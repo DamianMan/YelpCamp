@@ -1,0 +1,191 @@
+<%- layout('layouts/boilerplate') %>
+    <link rel="stylesheet" href="/css/style.css">
+    <div id="map" class="show-map mt-3"></div>
+
+    <h1>Campgrounds</h1>
+    <% for(let item of campgrounds) { %>
+        <div class="card mb-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <% item.image.forEach((img, i)=> { %>
+                        <% if ( i===0) {%>
+                            <img class="img-fluid" src="<%= img.url %>" alt="image">
+                            <% } %>
+                                <% }) %>
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <%= item.title %>
+                        </h5>
+                        <p class="card-title">
+                            <%= item.description %>
+                        </p>
+                        <p class="card-title "><small class="text-muted">
+                                <%= item.location %>
+                            </small></p>
+                        <a class="btn btn-primary" href="/campgrounds/<%= item.id %>">View More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <% } %>
+
+            <script>
+                let camps = '<%-JSON.stringify(campgrounds)%>';
+                camps = JSON.parse(camps)
+
+                const map = tt.map({
+                    key: "<%-process.env.MAP_TT_KEY%>",
+                    container: 'map',
+                    center: [-103.771556, 44.967243],
+                    zoom: 3,
+                });
+                map.addControl(new tt.FullscreenControl());
+                map.addControl(new tt.NavigationControl());
+
+                const markersOnTheMap = {};
+                const eventListenersAdded = false;
+
+                const points = [];
+
+                for (let camp of camps) {
+                    points.push({
+                        coordinates: camp.geometry.coordinates,
+                        properties: {
+                            id: camp._id,
+                            name: camp.title
+                        }
+                    })
+                }
+
+                const geoJson = {
+                    type: 'FeatureCollection',
+                    features: points.map(function (point) {
+                        return {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: point.coordinates
+                            },
+                            properties: point.properties
+                        };
+                    })
+                };
+
+                function refreshMarkers() {
+                    Object.keys(markersOnTheMap).forEach(function (id) {
+                        markersOnTheMap[id].remove();
+                        delete markersOnTheMap[id];
+                    });
+
+                    map.querySourceFeatures('point-source').forEach(function (feature) {
+                        if (feature.properties && !feature.properties.cluster) {
+                            const id = feature.properties.id;
+                            if (!markersOnTheMap[id]) {
+                                const newMarker = new tt.Marker().setLngLat(feature.geometry.coordinates);
+                                newMarker.addTo(map);
+                                newMarker.setPopup(new tt.Popup({ offset: 30 }).setHTML(`<a href="campgrounds/${id}"><b>${feature.properties.name}</b></a>`));
+                                markersOnTheMap[id] = newMarker;
+                            }
+                        }
+                    });
+                }
+
+                map.on('load', function () {
+                    map.addSource('point-source', {
+                        type: 'geojson',
+                        data: geoJson,
+                        cluster: true,
+                        clusterMaxZoom: 14,
+                        clusterRadius: 50
+                    });
+
+                    map.addLayer({
+                        id: 'clusters',
+                        type: 'circle',
+                        source: 'point-source',
+                        filter: ['has', 'point_count'],
+                        paint: {
+                            'circle-color': [
+                                'step',
+                                ['get', 'point_count'],
+                                '#EC619F',
+                                4,
+                                '#008D8D',
+                                7,
+                                '#6499E9',
+                                12,
+                                '#E9B824',
+                                20,
+                                '#F94C10'
+                            ],
+                            'circle-radius': [
+                                'step',
+                                ['get', 'point_count'],
+                                15,
+                                4,
+                                20,
+                                7,
+                                25
+                            ],
+                            'circle-stroke-width': 2,
+                            'circle-stroke-color': 'white',
+                            'circle-stroke-opacity': 1
+                        }
+                    });
+
+                    map.addLayer({
+                        id: 'cluster-count',
+                        type: 'symbol',
+                        source: 'point-source',
+                        filter: ['has', 'point_count'],
+                        layout: {
+                            'text-field': '{point_count_abbreviated}',
+                            'text-size': 16
+                        },
+                        paint: {
+                            'text-color': 'white'
+                        }
+                    });
+
+                    map.on('data', function (e) {
+                        if (e.sourceId !== 'point-source' || !map.getSource('point-source').loaded()) {
+                            return;
+                        }
+
+                        refreshMarkers();
+
+                        if (!eventListenersAdded) {
+                            map.on('move', refreshMarkers);
+                            map.on('moveend', refreshMarkers);
+                            eventListenersAdded = true;
+                        }
+                    });
+
+                    map.on('click', 'clusters', function (e) {
+                        const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+                        const clusterId = features[0].properties.cluster_id;
+                        map.getSource('point-source').getClusterExpansionZoom(clusterId, function (err, zoom) {
+                            if (err) {
+                                return;
+                            }
+
+                            map.easeTo({
+                                center: features[0].geometry.coordinates,
+                                zoom: zoom + 0.5
+                            });
+                        });
+                    });
+
+                    map.on('mouseenter', 'clusters', function () {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+
+                    map.on('mouseleave', 'clusters', function () {
+                        map.getCanvas().style.cursor = '';
+                    });
+                });
+            </script>

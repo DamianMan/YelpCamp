@@ -1,0 +1,37 @@
+<%- layout('layouts/boilerplate') %>
+    <div class="row">
+        <h1 class="text-center mt-5">Add New Campground</h1>
+        <div class="col-md-6 offset-md-3">
+            <form class="validateForm" action="/campgrounds" method="POST" enctype="multipart/form-data" novalidate>
+                <label class="form-label" for="title">Title</label>
+                <input class="form-control mb-3" type="text" name="title" id="title" placeholder="add title" required>
+
+
+                <label class="form-label" for="location">Location</label>
+                <input class="form-control mb-3" type="text" name="location" id="location" placeholder="add location"
+                    required>
+
+                <label for="image" class="form-label">Image</label>
+                <input class="form-control mb-3" type="file" name="image" id="image" required multiple>
+                <!-- <label class="form-label" for="image">Image </label>
+                <input class="form-control mb-3" type="text" name="image" id="image" placeholder="Image Url" required> -->
+
+                <label for="price" class="form-label">Price</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="price">$</span>
+                    <input type="number" class="form-control" id="price" name="price" placeholder="0.00"
+                        aria-describedby="basic-addon3" required>
+                </div>
+
+
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control mb-3" name="description" id="description" cols="50" rows="2"
+                    required></textarea>
+
+
+                <button class="btn btn-success me-3">Save</button>
+                <a class="btn btn-danger" href="/campgrounds">Back</a>
+            </form>
+
+        </div>
+    </div>
