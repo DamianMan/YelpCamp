@@ -9,6 +9,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "v18.17.1"
+  },
   "dependencies": {
     "@tomtom-international/web-sdk-maps": "^6.25.0",
     "@tomtom-international/web-sdk-services": "^6.25.0",
